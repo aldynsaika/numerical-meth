@@ -1,9 +1,10 @@
 import plotly.graph_objects as go
 import numpy as np
+import math
 
 
 def f(x):
-    return 4*(1-x**2) - np.exp(x)
+    return 4*(1-x**2) - math.exp(x)
 
 
 def df(x):
@@ -85,7 +86,7 @@ def method_newton(x0, e=1e-15):
 def method_secant(x0, x1, e=1e-15):
     f1 = f(x1)
     i = 0
-    while abs(f1) < e:
+    while abs(f1) > e:
         i += 1
         f0, f1 = f(x0), f(x1)
         if abs(f1) == 0:
@@ -103,15 +104,32 @@ def method_steff(x0, e=1e-15):
         i += 1
         if abs(f0) == 0:
             return x, i
-        x1 = x - f0 * (f0 / f(x + f(x))-f0)
-        if abs(x1 - x) < e:
-            return x1, i
+        gx = f(x + f0)
+        x1 = x - ((f0**2) / (gx - f0))
         x = x1
+        f0 = f(x)
     return x, i
 
 
+a = 0
+b = 1
+x0 = 0.5
+x1 = 0.8
 
+x, iterations = regula_falsi(a, b)
+print(f"Метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
 
+x, iterations = mod_regula_falsi(a, b)
+print(f"Модифицированный метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
+
+x, iterations = method_newton(x0)
+print(f"Метод Ньютона\nКорень: {x} Итерации:{iterations}\n")
+
+x, iterations = method_secant(x0, x1)
+print(f"Метод секущих\nКорень: {x} Итерации:{iterations}\n")
+
+x, iterations = method_steff(x0)
+print(f"Метод Стеффенсена\nКорень: {x} Итерации:{iterations}\n")
 
 n = 10000
 x = np.linspace(-3, 3, n)
