@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import numpy as np
-import math
+import time
 
 
 def f(x):
@@ -8,10 +8,67 @@ def f(x):
     t = 10
     g = 9.8
     m = 68.1
-    return (((g*m)/x) * (1 - math.exp(-(x/m)*t)) - v)
+    return (((g * m) / x) * (1 - np.exp(-(x / m) * t)) - v)
 
 
-def mod_regula_falsi(xl, xu, es=10**-15, imax=10**16):
+def show_method(x, y, name):
+    data = [go.Scatter(x=x, y=y, name=name, mode='lines+markers')]
+    fig = go.Figure(data=data)
+    fig.show()
+    fig.write_image(f'{name}.png', scale=1)
+
+
+def dichotomy(a, b, e=10 ** -15):
+    start_time = time.perf_counter()
+    yd = []
+    iterations = []
+    fa, fb = f(a), f(b)
+    i = 0
+    while (b - a) / 2 > e:
+        i += 1
+        c = (a + b) / 2
+        fc = f(c)
+        iterations.append(i)
+        yd.append(fc)
+        if fc == 0:
+            print(f"time dichotomy {time.perf_counter() - start_time} seconds")
+            return c, i, iterations, yd
+        elif fa * fc < 0:
+            b = c
+        else:
+            a = c
+            fa = fc
+    print(f"time dichotomy {time.perf_counter() - start_time} seconds")
+    return (a + b) / 2, i, iterations, yd
+
+
+def regula_falsi(a, b, e=10 ** -15):
+    start_time = time.perf_counter()
+    yd = []
+    iterations = []
+    fa, fb = f(a), f(b)
+    i = 0
+    while abs(b - a) > e:
+        i += 1
+        c = b - fb * (b - a) / (fb - fa)
+        fc = f(c)
+        iterations.append(i)
+        yd.append(fc)
+        if abs(fc) < e:
+            print(f"time regula_falsi {time.perf_counter() - start_time} seconds")
+            return c, i, iterations, yd
+        elif fa * fc < 0:
+            b, fb = c, fc
+        else:
+            a, fa = c, fc
+    print(f"time regula_falsi {time.perf_counter() - start_time} seconds")
+    return c, i, iterations, yd
+
+
+def mod_regula_falsi(xl, xu, es=10 ** -15, imax=10 ** 16):
+    start_time = time.perf_counter()
+    x = []
+    y = []
     iter = 0
     xr = xl
     ea = 0
@@ -19,11 +76,12 @@ def mod_regula_falsi(xl, xu, es=10**-15, imax=10**16):
     fu = f(xu)
     il = 0
     iu = 0
-
     while True:
         xrold = xr
         xr = xu - (fu * (xl - xu)) / (fl - fu)
         fr = f(xr)
+        x.append(iter + 1)
+        y.append(fr)
         iter += 1
 
         if xr != 0:
@@ -50,71 +108,25 @@ def mod_regula_falsi(xl, xu, es=10**-15, imax=10**16):
 
         if ea < es or iter >= imax:
             break
-    return xr, iter
+    print(f"time modified regula_falsi {time.perf_counter() - start_time} seconds")
+    return xr, iter, x, y
 
 
-def dichotomy(a, b, e=10**-15):
-    fa, fb = f(a), f(b)
-    i = 0
-    while (b - a) / 2 > e:
-        i += 1
-        c = (a + b) / 2
-        fc = f(c)
-        if fc == 0:
-            return c, i
-        elif fa * fc < 0:
-            b = c
-        else:
-            a = c
-            fa = fc
-    return (a + b) / 2, i
-
-
-def regula_falsi(a, b, e=10**-15):
-    fa, fb = f(a), f(b)
-    i = 0
-    while abs(b - a) > e:
-        i += 1
-        c = b - fb * (b - a) / (fb - fa)
-        fc = f(c)
-        if abs(fc) < e:
-            return c, i
-        elif fa * fc < 0:
-            b, fb = c, fc
-        else:
-            a, fa = c, fc
-    return c, i
-
-
-c = 0
-a = 10**-9
+# Начальные значения
+a = 10 ** -9
 b = 200
-ans = 0
 
-x, iterations = dichotomy(a, b)
+# Метод дихотомии
+x, iterations, iter_list, func_values = dichotomy(a, b)
 print(f"Метод дихотомии\nКорень: {x} Итерации:{iterations}\n")
+# show_method(iter_list, func_values, 'Dichotomy Method')
 
-x, iterations = regula_falsi(a, b)
+# Метод regula falsi
+x, iterations, iter_list, func_values = regula_falsi(a, b)
 print(f"Метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
+# show_method(iter_list, func_values, 'Regula Falsi Method')
 
-x, iterations = mod_regula_falsi(a, b)
-print(f"Модифицированный метод regula falsi\nКорень: {x} Итерации:{iterations}")
-
-
-
-
-
-n = 1000
-x = np.linspace(0, n, n)
-y1 = []
-for i in range(1, n+1):
-        curr = f(i)
-        y1.append(curr)
-
-y1 = np.array(y1)[:n]
-
-data = [go.Scatter(x=x, y=y1, name='func')
-        ]
-fig = go.Figure(data=data)
-fig.show()
-fig.write_image('task2.png', scale = 1)
+# Модифицированный метод regula falsi
+x, iterations, iter_list, func_values = mod_regula_falsi(a, b)
+print(f"Модифицированный метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
+# show_method(iter_list, func_values, 'Modified Regula Falsi Method')
