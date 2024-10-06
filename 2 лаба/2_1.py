@@ -18,7 +18,7 @@ def show_method(x, y, name):
     fig.write_image(f'{name}.png', scale=1)
 
 
-def dichotomy(a, b, e=10 ** -15):
+def dichotomy(a, b, e=10 ** -15, chsi = 14.780203831661055):
     start_time = time.perf_counter()
     yd = []
     iterations = []
@@ -29,7 +29,7 @@ def dichotomy(a, b, e=10 ** -15):
         c = (a + b) / 2
         fc = f(c)
         iterations.append(i)
-        yd.append(fc)
+        yd.append(abs(c-chsi)/chsi)
         if fc == 0:
             print(f"time dichotomy {time.perf_counter() - start_time} seconds")
             return c, i, iterations, yd
@@ -42,7 +42,7 @@ def dichotomy(a, b, e=10 ** -15):
     return (a + b) / 2, i, iterations, yd
 
 
-def regula_falsi(a, b, e=10 ** -15):
+def regula_falsi(a, b, e=10 ** -15, chsi = 14.780203831661055):
     start_time = time.perf_counter()
     yd = []
     iterations = []
@@ -53,7 +53,7 @@ def regula_falsi(a, b, e=10 ** -15):
         c = b - fb * (b - a) / (fb - fa)
         fc = f(c)
         iterations.append(i)
-        yd.append(fc)
+        yd.append(abs(c-chsi)/chsi)
         if abs(fc) < e:
             print(f"time regula_falsi {time.perf_counter() - start_time} seconds")
             return c, i, iterations, yd
@@ -65,7 +65,7 @@ def regula_falsi(a, b, e=10 ** -15):
     return c, i, iterations, yd
 
 
-def mod_regula_falsi(xl, xu, es=10 ** -15, imax=10 ** 16):
+def mod_regula_falsi(xl, xu, es=10 ** -15, imax=10 ** 16, chsi = 14.780203831661055):
     start_time = time.perf_counter()
     x = []
     y = []
@@ -81,7 +81,7 @@ def mod_regula_falsi(xl, xu, es=10 ** -15, imax=10 ** 16):
         xr = xu - (fu * (xl - xu)) / (fl - fu)
         fr = f(xr)
         x.append(iter + 1)
-        y.append(fr)
+        y.append(abs(xr-chsi)/chsi)
         iter += 1
 
         if xr != 0:
@@ -116,17 +116,27 @@ def mod_regula_falsi(xl, xu, es=10 ** -15, imax=10 ** 16):
 a = 10 ** -9
 b = 200
 
+
 # Метод дихотомии
-x, iterations, iter_list, func_values = dichotomy(a, b)
+x, iterations, iter_list_dich, func_values_dich = dichotomy(a, b)
 print(f"Метод дихотомии\nКорень: {x} Итерации:{iterations}\n")
 # show_method(iter_list, func_values, 'Dichotomy Method')
 
 # Метод regula falsi
-x, iterations, iter_list, func_values = regula_falsi(a, b)
+x, iterations, iter_list_rf, func_values_rf = regula_falsi(a, b)
 print(f"Метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
 # show_method(iter_list, func_values, 'Regula Falsi Method')
 
 # Модифицированный метод regula falsi
-x, iterations, iter_list, func_values = mod_regula_falsi(a, b)
+x, iterations, iter_list_mrf, func_values_mrf = mod_regula_falsi(a, b)
 print(f"Модифицированный метод regula falsi\nКорень: {x} Итерации:{iterations}\n")
 # show_method(iter_list, func_values, 'Modified Regula Falsi Method')
+
+data = [go.Scatter(x=iter_list_dich, y=func_values_dich, name='dichotomy'),
+        go.Scatter(x=iter_list_rf, y=func_values_rf, name='regula falsi'),
+        go.Scatter(x=iter_list_mrf, y=func_values_mrf, name='mod regula falsi')]
+fig = go.Figure(data=data)
+fig.update_layout(xaxis_type="log", yaxis_type="log")
+fig.show()
+fig.write_image(f'1.png', scale=1)
+
