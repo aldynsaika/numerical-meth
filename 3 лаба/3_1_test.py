@@ -2,19 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Параметры задачи
-alpha = 0.01  # коэффициент теплопроводности
-L = 1.0  # длина стержня
+alpha = 4/(np.pi**2)
+L = 2.0
 T = 0.5  # общее время моделирования
 Nx = 50  # количество узлов по пространству
 Nt = 1000  # количество временных шагов
 dx = L / (Nx - 1)  # шаг по пространству
 dt = T / Nt  # шаг по времени
-r = alpha * dt / dx ** 2  # параметр схемы
+r = alpha * dt / (dx ** 2) # параметр схемы
 
 
 # Начальные и граничные условия
 def initial_condition(x):
-    return np.sin(np.pi * x)
+    return np.sin((np.pi/2) * x)
 
 
 def boundary_conditions(u, t):
@@ -40,21 +40,39 @@ def explicit_scheme(u0, r, Nt, Nx):
 def implicit_scheme(u0, r, Nt, Nx):
     u = u0.copy()
     A = np.zeros((Nx, Nx))
+    A_new = np.zeros((Nx, Nx))
     b = np.zeros(Nx)
+    q = np.zeros(Nx)
+    x = np.zeros(Nx)
 
-    # Матрица коэффициентов для неявной схемы
-    for j in range(1, Nx - 1):
-        A[j, j - 1] = -r
+    for j in range(0, Nx - 1):
+        A[j, j+1] = -r
         A[j, j] = 1 + 2 * r
-        A[j, j + 1] = -r
-    A[0, 0] = A[-1, -1] = 1  # Граничные условия
+        A[j+1, j] = -r
+    A[0, 0] = A[-1, -1] = 1
+    A[0, 1] = 0
+    A[Nx - 2, Nx - 1] = 0
+    A_new[0, 0] = A_new[-1, -1] = 1
 
-    for n in range(Nt):
-        b[1:-1] = u[1:-1]
-        b[0] = b[-1] = 0  # Граничные условия
-        u = np.linalg.solve(A, b)
+    for j in range(0, Nx):
+        b[j] = u[j]
 
-    return u
+    A_new[0, 1] = A[0, 1]/A[0,0]
+    for j in range(0, Nx-1):
+        A_new[j, j] = 1
+
+    for j in range(1, Nx-1):
+        A_new[j, j + 1] = A[j, j + 1]/(A[j, j] - A[j+1, j]*A_new[j-1, j])
+
+    q[0] = b[0]/A[0, 0]
+    for j in range(1, Nx-1):
+        q[j] = (b[j] - A_new[j + 1, j]*q[j-1])/(A[j, j] - A[j+1, j]*A_new[j-1, j])
+
+    x[-1] = q[-1]
+    for i in range(Nx-2, -1, -1):
+        x[i] = -A[i, i+1]*x[i+1] + q[i]
+
+    return x
 
 
 # Пространственная сетка
@@ -73,7 +91,7 @@ u_implicit = implicit_scheme(u0, r, Nt, Nx)
 plt.plot(x, u0, label='Initial Condition')
 plt.plot(x, u_explicit, label='Explicit Scheme')
 plt.plot(x, u_implicit, label='Implicit Scheme')
-plt.xlabel('Position along the rod')
+plt.xlabel('Position')
 plt.ylabel('Temperature')
 plt.title('Heat Distribution over time')
 plt.legend()
