@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 alpha = 4 / (np.pi ** 2)
 L = 2.0
-T = 1
+T = 0.5
 Nx = 50
 Nt = 1000
 dx = L / (Nx - 1)
@@ -41,13 +41,13 @@ def diag_algorithm(a, b, c, d):
 
     for i in range(n - 2, -1, -1):
         x[i] = d_[i] - c_[i] * x[i + 1]
-
     return x
 
 
 def implicit_scheme(u0, r, Nt, Nx):
     u = u0.copy()
     u_history = np.zeros((Nt, Nx))
+    boundary_conditions(u)
 
     a = -r * np.ones(Nx - 1)
     b = (1 + 2 * r) * np.ones(Nx)
@@ -60,10 +60,9 @@ def implicit_scheme(u0, r, Nt, Nx):
     for n in range(Nt):
         d = u.copy()
         x1 = np.linalg.norm(d)
-        boundary_conditions(d)
         u = diag_algorithm(a, b, c, d)
+        boundary_conditions(u)
         u_history[n] = u.copy()
-
     return u_history
 
 def explicit_scheme(u0, r, Nt, Nx):
