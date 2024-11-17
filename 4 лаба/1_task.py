@@ -56,7 +56,7 @@ def integrate_rectangle_mid(a, b, eps, tochn):
     x = np.linspace(a, b, n + 1)
     integral_new = 0
     integral_old = 0
-    integral_new = sum(f((x[:-1] + x[1:]) / 2)) * h  # Центр прямоугольников
+    integral_new = sum(f((x[:-1] + x[1:]) / 2)) * h
     ans_y.append(abs(integral_new - tochn))
     ans_x.append(n)
 
