@@ -1,32 +1,46 @@
-e = 1.0
-max_n = 1.0
-min_n = 1.0
-count_max = 0
-count_min = 0
-count_zero = 0
+import barcode
+from barcode.writer import ImageWriter
+from PIL import Image
+import win32print
+import win32ui
 
-# нахождение машинного нуля
-while ( 1+e/2 > 1):
-    e = e/2
-    count_zero += 1
+# Генерация штрихкода EAN-13
+ean = barcode.get_barcode_class('ean13')
+barcode_data = "123456789012"  # Пример EAN-13 кода
+barcode_image = ean(barcode_data, writer=ImageWriter())
 
-#нахождение максимального е
-while (max_n*2 != float('inf')):
-    max_n = max_n * 2
-    count_max += 1
-    # print(max_n, count_max)
+# Сохранение штрихкода в файл
+barcode_image.save("barcode_ean13")
 
-# нахождение минимального е
-while (min_n /2 > 0):
-    min_n = min_n/2
-    count_min += 1
-    # print(min_n, count_min)
+# Открытие изображения с помощью PIL
+image = Image.open("barcode_ean13.png")
 
-print(f"машинный ноль = {e}, степень двойки (с учетом скрытого бита) = {count_zero + 1}")
-print(f"максимальное число {max_n} максимальная экспонента = {count_max}")
-print(f"минимальное число {min_n} степень двойки (с учетом субнормальных чисел) = {count_min}, минимальная экспонента"
-      f" = -{count_min - count_zero - 1}")
-print(f"1, 1+e/2 = {1+e/2}, 1+e = {1+e}, 1 + e + e/2 = {1+e+e/2}")
-print(f"1+10**(-16) + 10**(-16) = {1+10**(-16) + 10**(-16)}")
-print(f"1+(10**(-16) + 10**(-16)) = {1+(10**(-16) + 10**(-16))}")
+# Изменение размера изображения до нужных 58мм x 30мм (примерно 228x118 пикселей для разрешения 300 dpi)
+image = image.resize((228, 118))
 
+# Сохранение измененного изображения
+image.save("barcode_resized.png")
+
+# Печать на принтере
+printer_name = win32print.GetDefaultPrinter()  # Получаем имя принтера
+
+# Получаем контекст устройства для принтера
+printer = win32ui.CreateDC()
+printer.CreatePrinterDC(printer_name)
+
+# Открытие изображения для печати
+image_to_print = Image.open("barcode_resized.png")
+
+# Конвертация изображения в формат для печати
+image_to_print.show()
+
+# Печать
+printer.StartDoc("Barcode Print")
+printer.StartPage()
+
+# Печать изображения
+printer.DrawBitmap(image_to_print, (0, 0))
+
+# Завершение печати
+printer.EndPage()
+printer.EndDoc()
