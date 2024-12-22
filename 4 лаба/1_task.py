@@ -80,7 +80,7 @@ def integrate_rectangle_left(a, b, eps, n=2):
         if error_new <= eps:  # Условие сходимости
             break
 
-        if iteration_count >= 10:  # Предотвращение бесконечного цикла
+        if iteration_count >= 1000:  # Предотвращение бесконечного цикла
             print("Превышено максимальное количество итераций.")
             break
 
@@ -97,9 +97,9 @@ def integrate_rectangle_left(a, b, eps, n=2):
         iteration_count += 1
 
         # Вывод степени точности после первых 4 итераций
-        if iteration_count == 4:
+        if iteration_count == 10:
             if len(p_values) >= 2:  # Проверяем, что есть минимум 2 значения
-                print(f"Степень точности после 4 итераций (Left Rectangle): p1={p_values[-2]}, p2={p_values[-1]}")
+                print(f"Степень точности после 10 итераций (Left Rectangle): p={p_values[-2]}")
 
     return integral_new, ans_x, ans_y
 
@@ -132,7 +132,7 @@ def integrate_rectangle_mid(a, b, eps, n=2):
         if error_new <= eps:  # Условие сходимости
             break
 
-        if iteration_count >= 10:  # Предотвращение бесконечного цикла
+        if iteration_count >= 1000:  # Предотвращение бесконечного цикла
             print("Превышено максимальное количество итераций.")
             break
 
@@ -149,9 +149,9 @@ def integrate_rectangle_mid(a, b, eps, n=2):
         iteration_count += 1
 
         # Вывод степени точности после первых 4 итераций
-        if iteration_count == 4:
+        if iteration_count == 10:
             if len(p_values) >= 2:  # Проверяем, что есть минимум 2 значения
-                print(f"Степень точности после 4 итераций (Mid Rectangle): p1={p_values[-2]}, p2={p_values[-1]}")
+                print(f"Степень точности после 10 итераций (Mid Rectangle): p={p_values[-2]}")
 
     return integral_new, ans_x, ans_y
 

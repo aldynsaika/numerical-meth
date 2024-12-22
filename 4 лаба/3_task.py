@@ -139,33 +139,35 @@ def integrate_rectangle_mid(a, b, eps, n=2):
                 print(f"Степень точности после 4 итераций (Mid Rectangle): p1={p_values[-2]}, p2={p_values[-1]}")
 
     return integral_new, ans_x, ans_y
+
+
 # Задаем параметры интегрирования
-a = -5
+a = 0
 b = 5
-eps = 1e-15
+eps = 1e-12
 
 # Выполняем интегрирование для всех методов
 result_simpson, x_simpson, y_simpson = integrate_simpson(a, b, eps)
 print(f"Значение интеграла (Simpson): {result_simpson}")
-
-result_left_rectangle, x_left, y_left = integrate_rectangle_left(a, b, eps)
-print(f"Значение интеграла (Left Rectangle): {result_left_rectangle}")
-
-result_mid_rectangle, x_mid, y_mid = integrate_rectangle_mid(a, b, eps)
-print(f"Значение интеграла (Mid Rectangle): {result_mid_rectangle}")
+#
+# result_left_rectangle, x_left, y_left = integrate_rectangle_left(a, b, eps)
+# print(f"Значение интеграла (Left Rectangle): {result_left_rectangle}")
+#
+# result_mid_rectangle, x_mid, y_mid = integrate_rectangle_mid(a, b, eps)
+# print(f"Значение интеграла (Mid Rectangle): {result_mid_rectangle}")
 
 # Построение графиков зависимости ошибки от n
-plt.figure(figsize=(12, 8))
-
-plt.plot(x_simpson, y_simpson, label='Метод Симпсона', marker='o')
-plt.plot(x_left, y_left, label='Левые прямоугольники', marker='o')
-plt.plot(x_mid, y_mid, label='Средние прямоугольники', marker='o')
-
-plt.yscale('log')  # Логарифмическая шкала для оси Y
-plt.xscale('log')  # Логарифмическая шкала для оси X
-plt.xlabel('Количество разбиений (n)')
-plt.ylabel('Ошибка')
-plt.title('Зависимость ошибки от количества разбиений (n)')
-plt.legend()
-plt.grid()
-plt.show()
+# plt.figure(figsize=(12, 8))
+#
+# plt.plot(x_simpson, y_simpson, label='Метод Симпсона', marker='o')
+# plt.plot(x_left, y_left, label='Левые прямоугольники', marker='o')
+# plt.plot(x_mid, y_mid, label='Средние прямоугольники', marker='o')
+#
+# plt.yscale('log')
+# plt.xscale('log')
+# plt.xlabel('Количество разбиений (n)')
+# plt.ylabel('Ошибка')
+# plt.title('Зависимость ошибки от количества разбиений (n)')
+# plt.legend()
+# plt.grid()
+# plt.show()
