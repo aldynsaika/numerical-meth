@@ -1,57 +1,61 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.interpolate import griddata
+
 
 # Генерация равномерной сетки
 def generate_grid(N):
-    if N < 3:
-        raise ValueError("Число узлов N должно быть не меньше 3.")
-    h = 1 / (N - 1)  # Шаг сетки
-    x = np.linspace(0, 1, N)  # Массив координат с учетом границ
-    y = np.linspace(0, 1, N)
+    h = 1 / (N)  # Шаг сетки
+    x = np.linspace(0, 1, N + 1)  # Массив координат с учетом границ
+    y = np.linspace(0, 1, N + 1)
     return x, y, h
+
 
 # Построение матрицы Лапласа
 def build_poisson_matrix(N):
-    inner_N = N - 2  # Число внутренних узлов
+    inner_N = N - 1  # Число внутренних узлов
     A = np.zeros((inner_N * inner_N, inner_N * inner_N))
 
     for i in range(inner_N):
         for j in range(inner_N):
             idx = i * inner_N + j
-            A[idx, idx] = -4  # Диагональ
+            A[idx, idx] = 4  # Диагональ
 
             if j > 0:
-                A[idx, idx - 1] = 1  # Левый сосед
+                A[idx, idx - 1] = -1  # Левый сосед
             if j < inner_N - 1:
-                A[idx, idx + 1] = 1  # Правый сосед
+                A[idx, idx + 1] = -1  # Правый сосед
             if i > 0:
-                A[idx, idx - inner_N] = 1  # Верхний сосед
+                A[idx, idx - inner_N] = -1  # Верхний сосед
             if i < inner_N - 1:
-                A[idx, idx + inner_N] = 1  # Нижний сосед
+                A[idx, idx + inner_N] = -1  # Нижний сосед
+    print('matrix A:\n ', A)
     return A
+
 
 # Построение правой части уравнения
 def build_rhs(N, h, f, g):
-    rhs = np.zeros((N - 2, N - 2))
-    x, y = np.linspace(h, 1 - h, N - 2), np.linspace(h, 1 - h, N - 2)
+    rhs = np.zeros((N - 1, N - 1))
+    x, y = np.linspace(h, 1, N), np.linspace(h, 1, N)
 
     # Вклад от функции f
-    for i in range(N - 2):
-        for j in range(N - 2):
+    for i in range(N - 1):
+        for j in range(N - 1):
             rhs[i, j] = f(x[i], y[j]) * h**2
 
     # Влияние граничных условий
-    for i in range(N - 2):
-        rhs[i, 0] -= g(0, y[i])  # Левая граница
-        rhs[i, -1] -= g(1, y[i])  # Правая граница
-        rhs[0, i] -= g(x[i], 0)  # Нижняя граница
-        rhs[-1, i] -= g(x[i], 1)  # Верхняя граница
+    for i in range(N - 1):
+        rhs[i, 0] += g(0, y[i])  # Левая граница
+        rhs[i, -1] += g(1, y[i])  # Правая граница
+        rhs[0, i] += g(x[i], 0)  # Нижняя граница
+        rhs[-1, i] += g(x[i], 1)  # Верхняя граница
+    print(rhs.ravel(), '---------')
+    print('h = ', h)
 
     return rhs.ravel()
 
+
 # Метод Якоби
-def jacobi_method(A, b, tol=1e-6, max_iter=10000):
+def jacobi_method(A, b, tol=1e-4, max_iter=1000000000):
     x = np.zeros_like(b, dtype=float)
     D = np.diag(A)
     R = A - np.diagflat(D)
@@ -64,8 +68,9 @@ def jacobi_method(A, b, tol=1e-6, max_iter=10000):
 
     raise ValueError("Метод Якоби не сошелся")
 
+
 # Метод Зейделя
-def gauss_seidel_method(A, b, tol=1e-6, max_iter=10000):
+def gauss_seidel_method(A, b, tol=1e-4, max_iter=1000000000):
     x = np.zeros_like(b, dtype=float)
 
     for _ in range(max_iter):
@@ -81,6 +86,7 @@ def gauss_seidel_method(A, b, tol=1e-6, max_iter=10000):
 
     raise ValueError("Метод Зейделя не сошелся")
 
+
 # Решение уравнения Пуассона
 def solve_poisson(N, f, g, method="jacobi"):
     x, y, h = generate_grid(N)
@@ -94,11 +100,16 @@ def solve_poisson(N, f, g, method="jacobi"):
     else:
         raise ValueError("Неизвестный метод")
 
-    u_full = np.zeros((N, N))
-    u_full[1:-1, 1:-1] = u.reshape((N - 2, N - 2))
+    u_full = np.zeros((N + 1, N + 1))
+    u_full[1:-1, 1:-1] = u.reshape((N - 1, N - 1))
+    u_full[0, :] = g(x, 0)
+    u_full[-1, :] = g(x, 1)
+    u_full[:, 0] = g(0, y)
+    u_full[:, -1] = g(1, y)
 
     print(f"Минимальное значение: {u_full.min()}, Максимальное значение: {u_full.max()}")
     return u_full, x, y
+
 
 # Визуализация решения
 def plot_heatmap(u, x, y):
@@ -111,61 +122,42 @@ def plot_heatmap(u, x, y):
     plt.show()
 
 
-def compute_convergence_order(N, f, g, method="jacobi"):
-    # Решаем уравнение на сетках с шагами h, h/2 и h/4
-    u_h, x_h, y_h = solve_poisson(N, f, g, method)
-    u_h2, x_h2, y_h2 = solve_poisson(N // 2 + 1, f, g, method)
-    u_h4, x_h4, y_h4 = solve_poisson(N // 4 + 1, f, g, method)
+def runge_error(N, f, g, method="jacobi"):
+    # Решаем уравнение на трех сетках: h, h/2, h/4
+    u_h, _, _ = solve_poisson(N, f, g, method)
+    u_h2, _, _ = solve_poisson(2 * N, f, g, method)
+    u_h4, _, _ = solve_poisson(4 * N, f, g, method)
 
-    # Создаем координаты для интерполяции
-    x_full_h2, y_full_h2 = np.meshgrid(x_h2[1:-1], y_h2[1:-1])
-    x_full_h4, y_full_h4 = np.meshgrid(x_h4[1:-1], y_h4[1:-1])
+    u_h_inner = u_h[1:-1, 1:-1]  # Размер (N-1, N-1)
 
-    # Интерполяция u_h на сетку u_h2
-    points_h = np.array([(x_h[i], y_h[j]) for i in range(N) for j in range(N)])
-    values_h = u_h.flatten()
-    u_h_interp = griddata(points_h, values_h,
-                          (x_full_h2, y_full_h2), method='linear')
 
-    # Интерполяция u_h2 на сетку u_h4
-    points_h2 = np.array([(x_h2[i], y_h2[j]) for i in range(N // 2 + 1) for j in range(N // 2 + 1)])
-    values_h2 = u_h2.flatten()
-    u_h2_interp = griddata(points_h2, values_h2,
-                           (x_full_h4, y_full_h4), method='linear')
+    u_h2_down = u_h2[2:-2:2, 2:-2:2]
+    u_h4_down = u_h4[4:-4:4, 4:-4:4]
 
-    # Интерполяция u_h на сетку u_h4 для сравнения
-    u_h_interp_full = griddata(points_h, values_h,
-                               (x_full_h4, y_full_h4), method='linear')
+    norm_h = np.linalg.norm(u_h2_down - u_h_inner)
+    norm_h2 = np.linalg.norm(u_h4_down - u_h2_down)
 
-    # Вычисляем нормы разностей
-    norm_h = np.linalg.norm(u_h[1:-1, 1:-1] - u_h_interp_full)
-    norm_h2 = np.linalg.norm(u_h2[1:-1, 1:-1] - u_h2_interp)
-
-    # Вычисляем порядок сходимости
-    if norm_h2 != 0:
+    if norm_h2 > 0:
         order = np.log2(norm_h / norm_h2)
-        return order
+        return abs(order)
     else:
         return None
 
 
 # Основной блок программы
 if __name__ == "__main__":
-    N = 10  # Число узлов, включая граничные
+    N = 16
     f = lambda x, y: 1
     g = lambda x, y: x + y
 
-    # Решение уравнения методом Якоби
     u_jacobi, x, y = solve_poisson(N, f, g, method="jacobi")
-    order_jacobi = compute_convergence_order(N, f, g, method="jacobi")
+    order_jacobi = runge_error(N, f, g, method="jacobi")
     print(f"Порядок сходимости метода Якоби: {order_jacobi}")
     print("Решение методом Якоби:")
     plot_heatmap(u_jacobi, x, y)
 
-    # Решение уравнения методом Зейделя
     u_gauss_seidel, x, y = solve_poisson(N, f, g, method="gauss_seidel")
-    order_gauss_seidel = compute_convergence_order(N, f, g, method="gauss_seidel")
+    order_gauss_seidel = runge_error(N, f, g, method="gauss_seidel")
     print(f"Порядок сходимости метода Зейделя: {order_gauss_seidel}")
     print("Решение методом Зейделя:")
     plot_heatmap(u_gauss_seidel, x, y)
-
