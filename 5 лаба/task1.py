@@ -48,8 +48,8 @@ def build_rhs(N, h, f, g):
         rhs[i, -1] += g(1, y[i])  # Правая граница
         rhs[0, i] += g(x[i], 0)  # Нижняя граница
         rhs[-1, i] += g(x[i], 1)  # Верхняя граница
-    print(rhs.ravel(), '---------')
-    print('h = ', h)
+    #print(rhs.ravel(), '---------')
+    #print('h = ', h)
 
     return rhs.ravel()
 
@@ -107,7 +107,6 @@ def solve_poisson(N, f, g, method="jacobi"):
     u_full[:, 0] = g(0, y)
     u_full[:, -1] = g(1, y)
 
-    print(f"Минимальное значение: {u_full.min()}, Максимальное значение: {u_full.max()}")
     return u_full, x, y
 
 
